@@ -1,7 +1,8 @@
 import uproot
 import numpy as np
+from scipy.stats import norm
 
-__all__ = ['events', 'pos', 'energy']
+__all__ = ['events', 'pos', 'energy', 'energy_distparm']
 
 def decode_position(events):
     Layer = events['Pos'] // (events['NCellX'] * events['NCellY'])
@@ -34,6 +35,14 @@ for i in range(len(events)):
     sumE = np.sum(Edep * weight)
     meanX = np.sum(x * Edep * weight) / sumE
     meanY = np.sum(y * Edep * weight) / sumE
-    print('%4d: %.3e\t%.3e\t%.3e\t%.3e\t%.3e' %(i, x0, y0, meanX, meanY, sumE))
     pos[i] = [meanX, meanY]
     energy[i] = sumE
+
+unique_energy = np.unique(events['Energy'])
+energy_distparm = np.empty((len(unique_energy), 2))
+for i in range(len(unique_energy)):
+    e = np.array([energy[j] for j in range(len(energy)) 
+                  if events['Energy'][j] == unique_energy[i]])
+    energy_distparm[i] = norm.fit(e)
+
+print(energy_distparm)
