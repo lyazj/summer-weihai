@@ -34,6 +34,6 @@ for i in range(len(events)):
     sumE = np.sum(Edep * weight)
     meanX = np.sum(x * Edep * weight) / sumE
     meanY = np.sum(y * Edep * weight) / sumE
-    #print('%4d: %.3e\t%.3e\t%.3e\t%.3e' %(i, x0, y0, meanX, meanY))
+    print('%4d: %.3e\t%.3e\t%.3e\t%.3e\t%.3e' %(i, x0, y0, meanX, meanY, sumE))
     pos[i] = [meanX, meanY]
     energy[i] = sumE

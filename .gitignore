@@ -1,4 +1,5 @@
+__pycache__
 build/
 .vscode/
-__pycache__
+*.pdf
 .ycm_extra_conf.py
