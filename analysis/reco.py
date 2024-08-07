@@ -4,7 +4,7 @@ from  matplotlib import pyplot as plt
 
 from scipy.stats import norm
 
-__all__ = ['events', 'pos', 'energy', 'energy_distparm']
+__all__ = ['events', 'pos', 'energy', 'unique_energy', 'energy_distparam']
 
 def decode_position(events):
     Layer = events['Pos'] // (events['NCellX'] * events['NCellY'])
@@ -40,12 +40,12 @@ for i in range(len(events)):
     pos[i] = [meanX, meanY]
     energy[i] = sumE
 
-unique_energy = np.unique(events['Energy'])
-energy_distparm = np.empty((len(unique_energy), 2))
+unique_energy = np.array(np.unique(events['Energy']))
+energy_distparam = np.empty((len(unique_energy), 2))
 for i in range(len(unique_energy)):
     e = np.array([energy[j] for j in range(len(energy)) 
                   if events['Energy'][j] == unique_energy[i]])
-    energy_distparm[i] = norm.fit(e)
+    energy_distparam[i] = norm.fit(e)
 
 print(energy_distparm)
 

@@ -1,7 +1,9 @@
 import uproot
 import numpy as np
 from scipy.optimize import curve_fit
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+mpl.use('agg')
 
 from reco import *
 reconstructed_energy = energy
@@ -24,27 +26,31 @@ plt.grid()
 plt.savefig('calibration.pdf')
 plt.close()
 
-exit()
+# 定义能量分辨率函数
+def resolution_function(E, a, b):
+    return E * np.hypot(a / np.sqrt(E), b) 
 
-# 进行线性刻度
-def calibration_function(true_energy, a, b):
-    return np.hypot(a / np.sqrt(true_energy), b) * true_energy
+E = unique_energy
+sigma = energy_distparam[:,1] / a1
 
-# 拟合刻度参数
-params, _ = curve_fit(calibration_function, true_energy, np.abs(reconstructed_energy - true_energy))
+a = np.mean(sigma / np.sqrt(E))
+b = 0
+params, cov = curve_fit(resolution_function, E, sigma, p0=(a, b))
 a, b = params
+print(f'a={a:.3e} b={b:.3e}')
+print(cov)
 
-# 应用刻度
-calibrated_energy = calibration_function(true_energy, a, b)
+y = sigma / E
+y1 = resolution_function(E, a, b) / E
 
-# 绘制刻度前后的能量对比
 plt.figure()
-plt.plot(true_energy / 1e3, reconstructed_energy / 1e3, 'o', label='Reconstructed Energy')
-plt.plot(true_energy / 1e3, calibrated_energy / 1e3, 'x', label='Calibrated Energy')
-plt.xlabel('True Energy (GeV)')
-plt.ylabel('Energy (GeV)')
+plt.plot(E, sigma / E * 100, '.', label='simulation')
+E = np.logspace(np.log10(np.min(E)) - 0.1, np.log10(np.max(E)) + 0.1, 101)
+plt.plot(E, resolution_function(E, a, b) / E * 100, '-', label=f'$\\sigma/E = \\text{{{a:.3e}}} / \\sqrt{{E}} \\oplus \\text{{{b:.3e}}}$')
+plt.title('Energy Uncertainty')
+plt.xlabel('Energy (MeV)')
+plt.ylabel('Relative Uncertainty (%)')
 plt.legend()
-plt.title('Energy Calibration')
-plt.tight_layout()
 plt.grid()
-plt.savefig('fit.pdf')
+plt.tight_layout()
+plt.savefig('uncertainty.pdf')
