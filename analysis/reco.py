@@ -1,5 +1,7 @@
 import uproot
 import numpy as np
+from  matplotlib import pyplot as plt
+
 from scipy.stats import norm
 
 __all__ = ['events', 'pos', 'energy', 'energy_distparm']
@@ -46,3 +48,21 @@ for i in range(len(unique_energy)):
     energy_distparm[i] = norm.fit(e)
 
 print(energy_distparm)
+
+x = np.logspace(np.log10(np.min(energy)), np.log10(np.max(energy)), 10001)
+y = np.zeros(x.shape)
+for mu, sigma in energy_distparm:
+    y += norm(mu, sigma).pdf(x)
+
+plt.figure()
+plt.plot(x, y, label='Reconstructed Energy')
+plt.title('Energy Distribution')
+plt.xlabel('True Energy (MeV)')
+plt.ylabel('Densitiy')
+plt.xscale('log')
+plt.yscale('linear')
+plt.legend()
+plt.tight_layout()
+plt.grid()
+plt.savefig('distribution.pdf')
+plt.close()
