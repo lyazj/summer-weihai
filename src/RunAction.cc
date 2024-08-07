@@ -51,7 +51,7 @@ void RunAction::BeginOfRunAction(const G4Run *)
 {
   auto d = (DetectorConstruction *)G4RunManager::GetRunManager()->GetUserDetectorConstruction();
   fScoringVolume = d->GetScoringVolume();
-  fNCellX = d->GetNCellX(), fNCellY = d->GetNCellY();
+  fNCellX = d->GetNCellX(), fNCellY = d->GetNCellY(), fNLayer = d->GetNLayer();
   fDetectorMinZ = d->GetDetectorMinZ();
   fDetectorX = d->GetDetectorX(), fDetectorY = d->GetDetectorY(), fDetectorZ = d->GetDetectorZ();
   fEdepMap.resize(d->GetNLayer());
@@ -67,9 +67,9 @@ void RunAction::BeginOfRunAction(const G4Run *)
     fTree->Branch("Theta", &fTheta);
     fTree->Branch("Phi", &fPhi);
     fTree->Branch("Energy", &fEnergy);
-    fTree->Branch("X", &fX);
-    fTree->Branch("Y", &fY);
-    fTree->Branch("Z", &fZ);
+    fTree->Branch("NCellX", &fNCellX);
+    fTree->Branch("NCellY", &fNCellY);
+    fTree->Branch("NLayer", &fNLayer);
   }
 }
 
@@ -88,7 +88,7 @@ void RunAction::AddStep(const G4Step *step)
   G4int i = (z - fDetectorMinZ) / fDetectorZ;
   G4int j = (x + fDetectorX / 2) / fDetectorX * fNCellX;
   G4int k = (y + fDetectorY / 2) / fDetectorY * fNCellY;
-  if(i < 0 || i >= (G4int)fEdepMap.size() || j < 0 || j >= fNCellX || k < 0 || k >= fNCellY) {
+  if(i < 0 || i >= fNLayer || j < 0 || j >= fNCellX || k < 0 || k >= fNCellY) {
     throw std::runtime_error("invalid cell index: " + std::to_string(i) + "," + std::to_string(j) + "," + std::to_string(k));
   }
 
@@ -97,14 +97,14 @@ void RunAction::AddStep(const G4Step *step)
 
 void RunAction::FillAndReset()
 {
-  for(size_t i = 0; i < fEdepMap.size(); ++i) {
+  for(G4int i = 0; i < fNLayer; ++i) {
     for(auto [pos, edep] : fEdepMap[i]) {
       fPos.push_back(i * fNCellX * fNCellY + pos);
       fEdep.push_back(edep);
     }
   }
   fTree->Fill();
-  for(size_t i = 0; i < fEdepMap.size(); ++i) fEdepMap[i].clear();
+  for(G4int i = 0; i < fNLayer; ++i) fEdepMap[i].clear();
   fPos.clear();
   fEdep.clear();
 }

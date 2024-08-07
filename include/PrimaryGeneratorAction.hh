@@ -59,6 +59,7 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     const G4ParticleGun* GetParticleGun() const { return fParticleGun; }
 
   private:
+    G4double fSourceZ;
     RunAction* fRunAction;
     G4ParticleGun* fParticleGun = nullptr; // pointer a to G4 gun class
 };

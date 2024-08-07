@@ -60,18 +60,16 @@ class RunAction : public G4UserRunAction
     void SetFilePath(const G4String &p) { fFilePath = p; }
     void SetAngle(G4double theta, G4double phi) { fTheta = theta; fPhi = phi; }
     void SetEnergy(G4double energy) { fEnergy = energy; }
-    void SetPosition(G4double x, G4double y, G4double z) { fX = x; fY = y; fZ = z; }
     void AddStep(const G4Step *);
     void FillAndReset();
 
   private:
     G4LogicalVolume *fScoringVolume;
-    G4int fNCellX, fNCellY;
+    G4int fNCellX, fNCellY, fNLayer;
     G4double fDetectorMinZ;
     G4double fDetectorX, fDetectorY, fDetectorZ;
     G4String fFilePath;
     G4double fTheta, fPhi, fEnergy;
-    G4double fX, fY, fZ;
     std::vector<std::unordered_map<G4int, G4double>> fEdepMap;
     std::vector<G4int> fPos;
     std::vector<G4double> fEdep;

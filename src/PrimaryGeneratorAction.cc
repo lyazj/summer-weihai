@@ -42,10 +42,10 @@ namespace B1
 
 PrimaryGeneratorAction::PrimaryGeneratorAction(RunAction* r)
 {
+  fSourceZ = INFINITY;
   fRunAction = r;
   fParticleGun = new G4ParticleGun(1);
 
-  // default particle kinematic
   G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
   G4ParticleDefinition* particle = particleTable->FindParticle("gamma");
   fParticleGun->SetParticleDefinition(particle);
@@ -62,7 +62,12 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
-  auto d = (DetectorConstruction *)G4RunManager::GetRunManager()->GetUserDetectorConstruction();
+  // Position.
+  if(fSourceZ == INFINITY) {
+    auto d = (DetectorConstruction *)G4RunManager::GetRunManager()->GetUserDetectorConstruction();
+    fSourceZ = d->GetSourceZ();
+    fParticleGun->SetParticlePosition({0, 0, fSourceZ});
+  }
 
   // Energy.
   // The value is set elsewhere.
@@ -77,12 +82,6 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   fRunAction->SetAngle(theta, phi);
   fParticleGun->SetParticleMomentumDirection({sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta)});
 
-  // Position.
-  G4double x = d->GetDetectorX() * (G4UniformRand() - 0.5);
-  G4double y = d->GetDetectorY() * (G4UniformRand() - 0.5);
-  G4double z = d->GetSourceZ();
-  fRunAction->SetPosition(x, y, z);
-  fParticleGun->SetParticlePosition({x, y, z});
   fParticleGun->GeneratePrimaryVertex(anEvent);
 }
 
