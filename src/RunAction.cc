@@ -30,6 +30,7 @@
 #include "RunAction.hh"
 #include "DetectorConstruction.hh"
 #include "G4RunManager.hh"
+#include <TROOT.h>
 #include <TFile.h>
 #include <TTree.h>
 #include <unistd.h>
@@ -42,7 +43,8 @@ namespace B1
 
 RunAction::RunAction()
 {
-  fFilePath = "output/" + std::to_string(getpid()) + ".root";
+  ROOT::EnableThreadSafety();
+  fFilePath = "output/" + std::to_string(getpid()) + "/" + std::to_string(G4Threading::G4GetThreadId()) + ".root";
   fFile = NULL;
   fTree = NULL;
 }
@@ -58,7 +60,7 @@ void RunAction::BeginOfRunAction(const G4Run *)
 
   if(fFile == NULL) {
     auto dirpath = fs::path(fFilePath.c_str()).parent_path();
-    if(!dirpath.empty()) fs::create_directory(dirpath);
+    if(!dirpath.empty()) fs::create_directories(dirpath);
     fFile = new TFile(fFilePath, "RECREATE");
     if(!fFile->IsOpen()) throw std::runtime_error("Cannot open file " + fFilePath);
     fTree = new TTree("tree", "tree");

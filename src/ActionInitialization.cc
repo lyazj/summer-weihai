@@ -40,8 +40,7 @@ namespace B1
 
 void ActionInitialization::BuildForMaster() const
 {
-  auto runAction = new RunAction;
-  SetUserAction(runAction);
+  // empty
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
