@@ -49,12 +49,18 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 
     G4VPhysicalVolume* Construct() override;
     G4LogicalVolume* GetScoringVolume() const { return fScoringVolume; }
+    G4double GetDetectorX() { return fDetectorX; }
+    G4double GetDetectorY() { return fDetectorY; }
+    G4double GetDetectorZ() { return fDetectorZ; }
+    G4double GetDetectorMinZ() const { return fDetectorMinZ; }
+    G4double GetSourceZ() const { return fSourceZ; }
     G4int GetNLayer() const { return 26; }
     G4int GetNCellX() const { return 50; }
     G4int GetNCellY() const { return 50; }
 
   protected:
     G4LogicalVolume* fScoringVolume = nullptr;
+    G4double fDetectorX = 0.0, fDetectorY = 0.0, fDetectorZ = 0.0, fDetectorMinZ = 0.0;
     G4double fSourceZ = 0.0;
 };
 

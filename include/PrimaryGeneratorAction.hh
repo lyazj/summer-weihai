@@ -35,11 +35,11 @@
 #include "globals.hh"
 
 class G4ParticleGun;
-class G4Event;
-class G4Box;
 
 namespace B1
 {
+
+class RunAction;
 
 /// The primary generator action class with particle gun.
 ///
@@ -49,7 +49,7 @@ namespace B1
 class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 {
   public:
-    PrimaryGeneratorAction();
+    PrimaryGeneratorAction(RunAction*);
     ~PrimaryGeneratorAction() override;
 
     // method from the base class
@@ -59,8 +59,8 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     const G4ParticleGun* GetParticleGun() const { return fParticleGun; }
 
   private:
+    RunAction* fRunAction;
     G4ParticleGun* fParticleGun = nullptr; // pointer a to G4 gun class
-    G4Box* fEnvelopeBox = nullptr;
 };
 
 }

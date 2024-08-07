@@ -23,6 +23,13 @@ include(${Geant4_USE_FILE})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 #----------------------------------------------------------------------------
+# Find ROOT (required package)
+#
+find_package(ROOT REQUIRED)
+#include("${ROOT_DIR}/modules/RootNewMacros.cmake")  # ROOT5
+include("${ROOT_DIR}/ROOTUseFile.cmake")  # ROOT6
+
+#----------------------------------------------------------------------------
 # Locate sources and headers for this project
 # NB: headers are included so they will show up in IDEs
 #
@@ -33,7 +40,8 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 # Add the executable, and link it to the Geant4 libraries
 #
 add_executable(exampleB1 exampleB1.cc ${sources} ${headers})
-target_link_libraries(exampleB1 ${Geant4_LIBRARIES})
+target_compile_options(exampleB1 PRIVATE -g -O2 -Wall -Wshadow -Wextra)
+target_link_libraries(exampleB1 PRIVATE ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
@@ -44,8 +52,7 @@ set(EXAMPLEB1_SCRIPTS
   exampleB1.in
   exampleB1.out
   init_vis.mac
-  run1.mac
-  run2.mac
+  run.mac
   vis.mac
   )
 

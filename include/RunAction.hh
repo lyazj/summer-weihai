@@ -35,6 +35,10 @@
 #include "globals.hh"
 
 class G4Run;
+class G4Step;
+class G4LogicalVolume;
+class TFile;
+class TTree;
 
 namespace B1
 {
@@ -49,16 +53,30 @@ class RunAction : public G4UserRunAction
 {
   public:
     RunAction();
-    ~RunAction() override = default;
+    ~RunAction() override;
 
-    void BeginOfRunAction(const G4Run*) override;
-    void   EndOfRunAction(const G4Run*) override;
-
-    void AddEdep (G4double edep);
+    void BeginOfRunAction(const G4Run *) override;
+    void EndOfRunAction(const G4Run *) override;
+    void SetFilePath(const G4String &p) { fFilePath = p; }
+    void SetAngle(G4double theta, G4double phi) { fTheta = theta; fPhi = phi; }
+    void SetEnergy(G4double energy) { fEnergy = energy; }
+    void SetPosition(G4double x, G4double y, G4double z) { fX = x; fY = y; fZ = z; }
+    void AddStep(const G4Step *);
+    void FillAndReset();
 
   private:
-    G4Accumulable<G4double> fEdep = 0.;
-    G4Accumulable<G4double> fEdep2 = 0.;
+    G4LogicalVolume *fScoringVolume;
+    G4int fNCellX, fNCellY;
+    G4double fDetectorMinZ;
+    G4double fDetectorX, fDetectorY, fDetectorZ;
+    G4String fFilePath;
+    G4double fTheta, fPhi, fEnergy;
+    G4double fX, fY, fZ;
+    std::vector<std::unordered_map<G4int, G4double>> fEdepMap;
+    std::vector<G4int> fPos;
+    std::vector<G4double> fEdep;
+    TFile *fFile;
+    TTree *fTree;
 };
 
 }

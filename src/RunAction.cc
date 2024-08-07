@@ -28,129 +28,93 @@
 /// \brief Implementation of the B1::RunAction class
 
 #include "RunAction.hh"
-#include "PrimaryGeneratorAction.hh"
 #include "DetectorConstruction.hh"
-// #include "Run.hh"
-
 #include "G4RunManager.hh"
-#include "G4Run.hh"
-#include "G4AccumulableManager.hh"
-#include "G4LogicalVolumeStore.hh"
-#include "G4LogicalVolume.hh"
-#include "G4UnitsTable.hh"
-#include "G4SystemOfUnits.hh"
+#include <TFile.h>
+#include <TTree.h>
+#include <unistd.h>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace B1
 {
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 RunAction::RunAction()
 {
-  // add new units for dose
-  //
-  const G4double milligray = 1.e-3*gray;
-  const G4double microgray = 1.e-6*gray;
-  const G4double nanogray  = 1.e-9*gray;
-  const G4double picogray  = 1.e-12*gray;
-
-  new G4UnitDefinition("milligray", "milliGy" , "Dose", milligray);
-  new G4UnitDefinition("microgray", "microGy" , "Dose", microgray);
-  new G4UnitDefinition("nanogray" , "nanoGy"  , "Dose", nanogray);
-  new G4UnitDefinition("picogray" , "picoGy"  , "Dose", picogray);
-
-  // Register accumulable to the accumulable manager
-  G4AccumulableManager* accumulableManager = G4AccumulableManager::Instance();
-  accumulableManager->RegisterAccumulable(fEdep);
-  accumulableManager->RegisterAccumulable(fEdep2);
+  fFilePath = "output/" + std::to_string(getpid()) + ".root";
+  fFile = NULL;
+  fTree = NULL;
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-void RunAction::BeginOfRunAction(const G4Run*)
+void RunAction::BeginOfRunAction(const G4Run *)
 {
-  // inform the runManager to save random number seed
-  G4RunManager::GetRunManager()->SetRandomNumberStore(false);
+  auto d = (DetectorConstruction *)G4RunManager::GetRunManager()->GetUserDetectorConstruction();
+  fScoringVolume = d->GetScoringVolume();
+  fNCellX = d->GetNCellX(), fNCellY = d->GetNCellY();
+  fDetectorMinZ = d->GetDetectorMinZ();
+  fDetectorX = d->GetDetectorX(), fDetectorY = d->GetDetectorY(), fDetectorZ = d->GetDetectorZ();
+  fEdepMap.resize(d->GetNLayer());
 
-  // reset accumulables to their initial values
-  G4AccumulableManager* accumulableManager = G4AccumulableManager::Instance();
-  accumulableManager->Reset();
-
+  if(fFile == NULL) {
+    auto dirpath = fs::path(fFilePath.c_str()).parent_path();
+    if(!dirpath.empty()) fs::create_directory(dirpath);
+    fFile = new TFile(fFilePath, "RECREATE");
+    if(!fFile->IsOpen()) throw std::runtime_error("Cannot open file " + fFilePath);
+    fTree = new TTree("tree", "tree");
+    fTree->Branch("Pos", &fPos);
+    fTree->Branch("Edep", &fEdep);
+    fTree->Branch("Theta", &fTheta);
+    fTree->Branch("Phi", &fPhi);
+    fTree->Branch("Energy", &fEnergy);
+    fTree->Branch("X", &fX);
+    fTree->Branch("Y", &fY);
+    fTree->Branch("Z", &fZ);
+  }
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-void RunAction::EndOfRunAction(const G4Run* run)
+void RunAction::EndOfRunAction(const G4Run *)
 {
-  G4int nofEvents = run->GetNumberOfEvent();
-  if (nofEvents == 0) return;
+  fTree->AutoSave("SaveSelf, Overwrite");
+}
 
-  // Merge accumulables
-  G4AccumulableManager* accumulableManager = G4AccumulableManager::Instance();
-  accumulableManager->Merge();
+void RunAction::AddStep(const G4Step *step)
+{
+  G4VPhysicalVolume *volume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
+  if(volume->GetLogicalVolume() != fScoringVolume) return;
 
-  // Compute dose = total energy deposit in a run and its variance
-  //
-  G4double edep  = fEdep.GetValue();
-  G4double edep2 = fEdep2.GetValue();
-
-  G4double rms = edep2 - edep*edep/nofEvents;
-  if (rms > 0.) rms = std::sqrt(rms); else rms = 0.;
-
-  const auto detConstruction = static_cast<const DetectorConstruction*>(
-    G4RunManager::GetRunManager()->GetUserDetectorConstruction());
-  G4double mass = detConstruction->GetScoringVolume()->GetMass();
-  G4double dose = edep/mass;
-  G4double rmsDose = rms/mass;
-
-  // Run conditions
-  //  note: There is no primary generator action object for "master"
-  //        run manager for multi-threaded mode.
-  const auto generatorAction = static_cast<const PrimaryGeneratorAction*>(
-    G4RunManager::GetRunManager()->GetUserPrimaryGeneratorAction());
-  G4String runCondition;
-  if (generatorAction)
-  {
-    const G4ParticleGun* particleGun = generatorAction->GetParticleGun();
-    runCondition += particleGun->GetParticleDefinition()->GetParticleName();
-    runCondition += " of ";
-    G4double particleEnergy = particleGun->GetParticleEnergy();
-    runCondition += G4BestUnit(particleEnergy,"Energy");
+  G4ThreeVector r = (step->GetPreStepPoint()->GetPosition() + step->GetPostStepPoint()->GetPosition()) / 2.0;
+  G4double x = r.x(), y = r.y(), z = r.z();
+  G4int i = (z - fDetectorMinZ) / fDetectorZ;
+  G4int j = (x + fDetectorX / 2) / fDetectorX * fNCellX;
+  G4int k = (y + fDetectorY / 2) / fDetectorY * fNCellY;
+  if(i < 0 || i >= (G4int)fEdepMap.size() || j < 0 || j >= fNCellX || k < 0 || k >= fNCellY) {
+    throw std::runtime_error("invalid cell index: " + std::to_string(i) + "," + std::to_string(j) + "," + std::to_string(k));
   }
 
-  // Print
-  //
-  if (IsMaster()) {
-    G4cout
-     << G4endl
-     << "--------------------End of Global Run-----------------------";
-  }
-  else {
-    G4cout
-     << G4endl
-     << "--------------------End of Local Run------------------------";
-  }
-
-  G4cout
-     << G4endl
-     << " The run consists of " << nofEvents << " "<< runCondition
-     << G4endl
-     << " Cumulated dose per run, in scoring volume : "
-     << G4BestUnit(dose,"Dose") << " rms = " << G4BestUnit(rmsDose,"Dose")
-     << G4endl
-     << "------------------------------------------------------------"
-     << G4endl
-     << G4endl;
+  fEdepMap[i][j * fNCellY + k] += step->GetTotalEnergyDeposit();
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-void RunAction::AddEdep(G4double edep)
+void RunAction::FillAndReset()
 {
-  fEdep  += edep;
-  fEdep2 += edep*edep;
+  for(size_t i = 0; i < fEdepMap.size(); ++i) {
+    for(auto [pos, edep] : fEdepMap[i]) {
+      fPos.push_back(i * fNCellX * fNCellY + pos);
+      fEdep.push_back(edep);
+    }
+  }
+  fTree->Fill();
+  for(size_t i = 0; i < fEdepMap.size(); ++i) fEdepMap[i].clear();
+  fPos.clear();
+  fEdep.clear();
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+RunAction::~RunAction()
+{
+  if(!fFile) return;
+  fFile->cd();
+  fTree->Write(NULL, TObject::kOverwrite);
+  fFile->Close();
+}
 
 }

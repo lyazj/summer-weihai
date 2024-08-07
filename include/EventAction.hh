@@ -33,6 +33,8 @@
 #include "G4UserEventAction.hh"
 #include "globals.hh"
 
+class G4Step;
+
 namespace B1
 {
 
@@ -48,12 +50,10 @@ class EventAction : public G4UserEventAction
 
     void BeginOfEventAction(const G4Event* event) override;
     void EndOfEventAction(const G4Event* event) override;
-
-    void AddEdep(G4double edep) { fEdep += edep; }
+    void AddStep(const G4Step *);
 
   private:
     RunAction* fRunAction = nullptr;
-    G4double   fEdep = 0.;
 };
 
 }

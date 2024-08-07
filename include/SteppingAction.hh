@@ -31,7 +31,6 @@
 #define B1SteppingAction_h 1
 
 #include "G4UserSteppingAction.hh"
-#include "globals.hh"
 
 class G4LogicalVolume;
 
@@ -53,7 +52,6 @@ class SteppingAction : public G4UserSteppingAction
 
   private:
     EventAction* fEventAction = nullptr;
-    G4LogicalVolume* fScoringVolume = nullptr;
 };
 
 }

@@ -1,0 +1,33 @@
+# Macro file for example B1
+# 
+# Can be run in batch, without graphic
+# or interactively: Idle> /control/execute run1.mac
+#
+# Initialize kernel
+/run/initialize
+/run/printProgress 10
+#
+/control/verbose 2
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+# 
+# Particle source
+#
+/gun/energy 1 GeV
+/run/beamOn 1000
+#
+/gun/energy 2 GeV
+/run/beamOn 1000
+#
+/gun/energy 5 GeV
+/run/beamOn 1000
+#
+/gun/energy 10 GeV
+/run/beamOn 1000
+#
+/gun/energy 50 GeV
+/run/beamOn 1000
+#
+/gun/energy 100 GeV
+/run/beamOn 1000

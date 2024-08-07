@@ -118,6 +118,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   }
 
   fScoringVolume = sensitiveLV;
+  fDetectorX = x, fDetectorY = y, fDetectorZ = z_detector;
+  fDetectorMinZ = z * 0.5 - z_detector;
   fSourceZ = -z * 0.5;
   return worldPV;
 }
