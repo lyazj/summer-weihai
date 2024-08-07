@@ -1,6 +1,8 @@
 import uproot
 import numpy as np
 
+__all__ = ['events', 'pos', 'energy']
+
 def decode_position(events):
     Layer = events['Pos'] // (events['NCellX'] * events['NCellY'])
     XCell = events['Pos'] % (events['NCellX'] * events['NCellY']) // events['NCellY']
@@ -14,9 +16,13 @@ def decode_edep(events, i):
         Edep[l, x, y] = e
     return Edep.sum(axis=0)
 
+
 INPUT = 'tree.root'
 events = uproot.open(INPUT + ':tree').arrays()
+pos = np.empty((len(events), 2))
+energy = np.empty(len(events))
 print('Found fields:', events.fields)
+
 [y, x] = np.meshgrid(range(50), range(50))
 for i in range(len(events)):
     Edep = decode_edep(events, i)
@@ -28,4 +34,6 @@ for i in range(len(events)):
     sumE = np.sum(Edep * weight)
     meanX = np.sum(x * Edep * weight) / sumE
     meanY = np.sum(y * Edep * weight) / sumE
-    print('%4d: %.3e\t%.3e\t%.3e\t%.3e' %(i, x0, y0, meanX, meanY))
+    #print('%4d: %.3e\t%.3e\t%.3e\t%.3e' %(i, x0, y0, meanX, meanY))
+    pos[i] = [meanX, meanY]
+    energy[i] = sumE
