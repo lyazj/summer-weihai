@@ -48,11 +48,12 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     ~DetectorConstruction() override = default;
 
     G4VPhysicalVolume* Construct() override;
-
     G4LogicalVolume* GetScoringVolume() const { return fScoringVolume; }
+    G4double GetWorldHalfZ() const { return fWorldHalfZ; }
 
   protected:
     G4LogicalVolume* fScoringVolume = nullptr;
+    G4double fWorldHalfZ = 0.0;
 };
 
 }
