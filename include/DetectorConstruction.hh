@@ -49,11 +49,13 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 
     G4VPhysicalVolume* Construct() override;
     G4LogicalVolume* GetScoringVolume() const { return fScoringVolume; }
-    G4double GetWorldHalfZ() const { return fWorldHalfZ; }
+    G4int GetNLayer() const { return 26; }
+    G4int GetNCellX() const { return 50; }
+    G4int GetNCellY() const { return 50; }
 
   protected:
     G4LogicalVolume* fScoringVolume = nullptr;
-    G4double fWorldHalfZ = 0.0;
+    G4double fSourceZ = 0.0;
 };
 
 }

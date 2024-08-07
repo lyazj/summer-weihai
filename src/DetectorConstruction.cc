@@ -47,8 +47,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double x = 50.5 * cm, y = x;
   G4double z_absorber = 3.5 * mm, z_sensitive = 0.3 * mm, z_gap = 1.7 * mm;
   G4double z_layer = z_absorber + z_sensitive + z_gap;
-  G4int nlayer = 26;
-  G4double z = nlayer * z_layer;
+  G4int nlayer = GetNLayer();
+  G4double distance = 2 * m;
+  G4double z_detector = nlayer * z_layer;
+  G4double z = z_detector + distance;
   G4Color c_absorber, c_sensitive, c_gap;
   G4VisAttributes v_absorber, v_sensitive, v_gap;
 
@@ -107,7 +109,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   // Layer placement.
   {
-    G4double zp = -z * 0.5;
+    G4double zp = z * 0.5 - z_detector;
     for(G4int i = 0; i < nlayer; ++i) {
       G4double zt = z_layer * 0.5;
       new G4PVPlacement(nullptr, {0, 0, zp + zt}, layerLV, layerLV->GetName(), worldLV, false, i, true);
@@ -116,7 +118,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   }
 
   fScoringVolume = sensitiveLV;
-  fWorldHalfZ = worldS->GetZHalfLength();
+  fSourceZ = -z * 0.5;
   return worldPV;
 }
 
