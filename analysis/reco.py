@@ -1,7 +1,6 @@
 import uproot
 import numpy as np
-from  matplotlib import pyplot as plt
-
+from matplotlib import pyplot as plt
 from scipy.stats import norm
 
 __all__ = ['events', 'pos', 'energy', 'unique_energy', 'energy_distparam']
@@ -22,7 +21,6 @@ def decode_edep(events, i):
 
 INPUT = 'tree.root'
 events = uproot.open(INPUT + ':tree').arrays()
-print(events)
 pos = np.empty((len(events), 2))
 energy = np.empty(len(events))
 print('Found fields:', events.fields)
@@ -32,7 +30,7 @@ for i in range(len(events)):
     Edep = decode_edep(events, i)
     xy0 = np.argmax(Edep)
     x0, y0 = xy0 // 50, xy0 % 50
-    showernum = (3.5 +0.5) * 50 / 50.5
+    showernum = (3.5 + 0.5) * 50 / 50.5
     distance = np.hypot(x - x0, y - y0)
     weight = distance <= showernum
     sumE = np.sum(Edep * weight)
@@ -48,18 +46,18 @@ for i in range(len(unique_energy)):
                   if events['Energy'][j] == unique_energy[i]])
     energy_distparam[i] = norm.fit(e)
 
-print(energy_distparm)
+print(energy_distparam)
 
 x = np.logspace(np.log10(np.min(energy)), np.log10(np.max(energy)), 10001)
 y = np.zeros(x.shape)
-for mu, sigma in energy_distparm:
+for mu, sigma in energy_distparam:
     y += norm(mu, sigma).pdf(x)
 
 plt.figure()
 plt.plot(x, y, label='Reconstructed Energy')
 plt.title('Energy Distribution')
 plt.xlabel('True Energy (MeV)')
-plt.ylabel('Densitiy')
+plt.ylabel('Density')
 plt.xscale('log')
 plt.yscale('linear')
 plt.legend()

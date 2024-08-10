@@ -11,6 +11,7 @@ true_energy = np.array(events['Energy'])
 
 a1, a0 = np.polyfit(true_energy, reconstructed_energy, 1)
 calibrated_energy = a1 * true_energy + a0
+print(a1, a0)
 
 plt.figure()
 plt.plot(true_energy, reconstructed_energy, '.', label='Reconstructed Energy')
